@@ -12,5 +12,5 @@ public class Visitor {
     private Long id;
     private String name;
     private int age;
-    private String gender;
+    private Gender gender;
 }
