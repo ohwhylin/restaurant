@@ -1,5 +1,6 @@
 package com.example.restaurant.entity;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,8 +10,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Review {
 
+    @NotNull
     private Long visitorId;
+    @NotNull
     private Long restaurantId;
-    private int score;
+    @NotNull
+    private Integer score;
+    @NotNull
     private String text;
 }
