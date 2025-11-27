@@ -1,7 +1,10 @@
 package com.example.restaurant.service;
 
+import com.example.restaurant.dto.review.ReviewRequestDto;
+import com.example.restaurant.dto.review.ReviewResponseDto;
 import com.example.restaurant.entity.Restaurant;
 import com.example.restaurant.entity.Review;
+import com.example.restaurant.mapper.ReviewMapper;
 import com.example.restaurant.repository.RestaurantRepository;
 import com.example.restaurant.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,45 +19,65 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final RestaurantRepository restaurantRepository;
+    private final ReviewMapper reviewMapper;
 
-    public void save(Review review) {
+    public List<ReviewResponseDto> getAllReviews() {
+        return reviewRepository.findAll().stream().map(reviewMapper::toResponseDto).toList();
+    }
+
+    public ReviewResponseDto getReview(Long visitorId, Long restaurantId) {
+        Review review = reviewRepository.findById(visitorId, restaurantId);
+        if (review == null) {
+            return null;
+        }
+        return reviewMapper.toResponseDto(review);
+    }
+
+    public ReviewResponseDto createReview(ReviewRequestDto dto) {
+        Review review = reviewMapper.toEntity(dto);
         reviewRepository.save(review);
-        recalculateRestaurantRating(review.getRestaurantId());
+        recalculateRating(dto.restaurantId());
+        return reviewMapper.toResponseDto(review);
     }
 
-    public void remove(Review review) {
-        reviewRepository.remove(review);
-        recalculateRestaurantRating(review.getRestaurantId());
+    public ReviewResponseDto updateReview(Long visitorId, Long restaurantId, ReviewRequestDto dto) {
+        Review existing = reviewRepository.findById(visitorId, restaurantId);
+        if (existing == null) {
+            return null;
+        }
+
+        existing.setScore(dto.score());
+        existing.setText(dto.text());
+
+        reviewRepository.save(existing);
+        recalculateRating(restaurantId);
+
+        return reviewMapper.toResponseDto(existing);
     }
 
-    public List<Review> findAll() {
-        return reviewRepository.findAll();
+    public void deleteReview(Long visitorId, Long restaurantId) {
+        reviewRepository.removeById(visitorId, restaurantId);
+        recalculateRating(restaurantId);
     }
 
-    private void recalculateRestaurantRating(Long restaurantId) {
-        List<Review> allReviews = reviewRepository.findAll();
-
+    private void recalculateRating(Long restaurantId) {
+        List<Review> all = reviewRepository.findAll();
         int sum = 0;
         int count = 0;
 
-        for (Review review : allReviews) {
-            if (review.getRestaurantId().equals(restaurantId)) {
-                sum += review.getScore();
+        for (Review r : all) {
+            if (r.getRestaurantId().equals(restaurantId)) {
+                sum += r.getScore();
                 count++;
             }
         }
 
-        BigDecimal newRating;
-        if (count == 0) {
-            newRating = BigDecimal.ZERO;
-        } else {
-            double average = (double) sum / count;
-            newRating = BigDecimal.valueOf(average);
-        }
+        BigDecimal rating = (count == 0) ? BigDecimal.ZERO : BigDecimal.valueOf((double) sum / count);
 
-        for (Restaurant restaurant : restaurantRepository.findAll()) {
-            if (restaurant.getId().equals(restaurantId)) {
-                restaurant.setRating(newRating);
+        for (Restaurant r : restaurantRepository.findAll()) {
+            if (r.getId().equals(restaurantId)) {
+                r.setRating(rating);
+                restaurantRepository.save(r);
                 break;
             }
         }
