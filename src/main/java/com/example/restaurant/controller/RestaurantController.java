@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -24,6 +25,22 @@ public class RestaurantController {
     @Operation(summary = "Получить список всех ресторанов")
     public List<RestaurantResponseDto> getAllRestaurants() {
         return restaurantService.getAllRestaurants();
+    }
+
+    @GetMapping("/search/by-rating")
+    @Operation(summary = "Поиск ресторанов с рейтингом не меньше заданного (по имени метода)")
+    public List<RestaurantResponseDto> searchByRating(
+            @RequestParam("minRating") BigDecimal minRating
+    ) {
+        return restaurantService.findRestaurantsByMinRating(minRating);
+    }
+
+    @GetMapping("/search/by-rating-query")
+    @Operation(summary = "Поиск ресторанов с рейтингом не меньше заданного (через @Query JPQL)")
+    public List<RestaurantResponseDto> searchByRatingQuery(
+            @RequestParam("minRating") BigDecimal minRating
+    ) {
+        return restaurantService.findRestaurantsByMinRatingQuery(minRating);
     }
 
     @GetMapping("/{id}")
