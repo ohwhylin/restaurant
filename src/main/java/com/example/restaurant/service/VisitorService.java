@@ -18,38 +18,37 @@ public class VisitorService {
     private final UserMapper userMapper;
 
     public List<UserResponseDto> getAllUsers() {
-        return visitorRepository.findAll().stream().map(userMapper::toResponseDto).toList();
+        return visitorRepository.findAll()
+                .stream()
+                .map(userMapper::toResponseDto)
+                .toList();
     }
 
     public UserResponseDto getUserById(Long id) {
-        Visitor visitor = visitorRepository.findById(id);
-        if (visitor == null) {
-            return null;
-        }
-        return userMapper.toResponseDto(visitor);
+        return visitorRepository.findById(id)
+                .map(userMapper::toResponseDto)
+                .orElse(null);
     }
 
     public UserResponseDto createUser(UserRequestDto dto) {
         Visitor visitor = userMapper.toEntity(dto);
-        visitorRepository.save(visitor);
-        return userMapper.toResponseDto(visitor);
+        Visitor saved = visitorRepository.save(visitor);
+        return userMapper.toResponseDto(saved);
     }
 
     public UserResponseDto updateUser(Long id, UserRequestDto dto) {
-        Visitor existing = visitorRepository.findById(id);
-        if (existing == null) {
-            return null;
-        }
-
-        existing.setName(dto.name());
-        existing.setAge(dto.age());
-        existing.setGender(dto.gender());
-
-        visitorRepository.save(existing);
-        return userMapper.toResponseDto(existing);
+        return visitorRepository.findById(id)
+                .map(existing -> {
+                    existing.setName(dto.name());
+                    existing.setAge(dto.age());
+                    existing.setGender(dto.gender());
+                    Visitor saved = visitorRepository.save(existing);
+                    return userMapper.toResponseDto(saved);
+                })
+                .orElse(null);
     }
 
     public void deleteUser(Long id) {
-        visitorRepository.removeById(id);
+        visitorRepository.deleteById(id);
     }
 }

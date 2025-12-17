@@ -19,40 +19,54 @@ public class RestaurantService {
     private final RestaurantMapper restaurantMapper;
 
     public List<RestaurantResponseDto> getAllRestaurants() {
-        return restaurantRepository.findAll().stream().map(restaurantMapper::toResponseDto).toList();
+        return restaurantRepository.findAll()
+                .stream()
+                .map(restaurantMapper::toResponseDto)
+                .toList();
     }
 
     public RestaurantResponseDto getRestaurantById(Long id) {
-        Restaurant restaurant = restaurantRepository.findById(id);
-        if (restaurant == null) {
-            return null;
-        }
-        return restaurantMapper.toResponseDto(restaurant);
+        return restaurantRepository.findById(id)
+                .map(restaurantMapper::toResponseDto)
+                .orElse(null);
     }
 
     public RestaurantResponseDto createRestaurant(RestaurantRequestDto dto) {
         Restaurant restaurant = restaurantMapper.toEntity(dto);
         restaurant.setRating(BigDecimal.ZERO);
-        restaurantRepository.save(restaurant);
-        return restaurantMapper.toResponseDto(restaurant);
+        Restaurant saved = restaurantRepository.save(restaurant);
+        return restaurantMapper.toResponseDto(saved);
     }
 
     public RestaurantResponseDto updateRestaurant(Long id, RestaurantRequestDto dto) {
-        Restaurant existing = restaurantRepository.findById(id);
-        if (existing == null) {
-            return null;
-        }
-
-        existing.setName(dto.name());
-        existing.setDescription(dto.description());
-        existing.setCuisineType(dto.cuisineType());
-        existing.setAverageCheck(dto.averageCheck());
-
-        restaurantRepository.save(existing);
-        return restaurantMapper.toResponseDto(existing);
+        return restaurantRepository.findById(id)
+                .map(existing -> {
+                    existing.setName(dto.name());
+                    existing.setDescription(dto.description());
+                    existing.setCuisineType(dto.cuisineType());
+                    existing.setAverageCheck(dto.averageCheck());
+                    Restaurant saved = restaurantRepository.save(existing);
+                    return restaurantMapper.toResponseDto(saved);
+                })
+                .orElse(null);
     }
 
     public void deleteRestaurant(Long id) {
-        restaurantRepository.removeById(id);
+        restaurantRepository.deleteById(id);
     }
+
+    public List<RestaurantResponseDto> findRestaurantsByMinRating(BigDecimal minRating) {
+        return restaurantRepository.findByRatingGreaterThanEqual(minRating)
+                .stream()
+                .map(restaurantMapper::toResponseDto)
+                .toList();
+    }
+
+    public List<RestaurantResponseDto> findRestaurantsByMinRatingQuery(BigDecimal minRating) {
+        return restaurantRepository.findWithMinRating(minRating)
+                .stream()
+                .map(restaurantMapper::toResponseDto)
+                .toList();
+    }
+
 }

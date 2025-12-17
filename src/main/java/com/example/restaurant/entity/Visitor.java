@@ -1,22 +1,27 @@
 package com.example.restaurant.entity;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import jakarta.annotation.Nullable;
 
+@Entity
+@Table(name = "visitors")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Visitor {
 
-    @NotNull
+    @Id
     private Long id;
-    @Nullable
+
+    @Column(length = 100)
     private String name;
-    @NotNull
+
+    @Column(nullable = false)
     private Integer age;
-    @NotNull
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Gender gender;
 }
